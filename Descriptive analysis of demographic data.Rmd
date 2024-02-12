@@ -1,0 +1,321 @@
+---
+title: "Project 1"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(forcats)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(patchwork)
+library(tidyverse)
+library(tidyr)
+
+
+census_2022_2002 <- read.csv("~/Desktop/census2002_2022.csv")
+
+census_2022 <- census_2022_2002[census_2022_2002$Year == 2022,]
+
+
+census_2002 <- census_2022_2002[census_2022_2002$Year == 2002,]
+
+
+census_2022$country <- as.character(census_2022$Country.Area.Name)
+
+census_2022$subregion <- as.character(census_2022$Subregion)
+census_2022$region <- as.character(census_2022$Region)
+
+census_2022_2002 = na.omit(census_2022_2002)
+
+```
+
+
+#Task1
+```{r}
+
+#Histogram for LE_both_sex
+ggplot() +
+  geom_histogram(aes(x = census_2022$Life.Expectancy.at.Birth..Both.Sexes),
+                 binwidth = 1, boundary=0, fill = "grey", color = "black") +  xlab("LE_both_sex") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Life.Expectancy.at.Birth..Both.Sexes), color='red')
+
+mean(census_2022$Life.Expectancy.at.Birth..Both.Sexes)
+
+#Histogram for LE_male
+LE_male <- ggplot() +
+  geom_histogram(aes(x = census_2022$Life.Expectancy.at.Birth..Males),
+                 binwidth = 1, boundary=0, fill = "grey", color = "black") +  xlab("LE_male") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Life.Expectancy.at.Birth..Males), color='red')
+
+
+mean(census_2022$Life.Expectancy.at.Birth..Males)
+
+#Histogram for LE_female
+LE_female <- ggplot() +
+  geom_histogram(aes(x = census_2022$Life.Expectancy.at.Birth..Females),
+                 binwidth = 1, boundary=0, fill = "grey", color = "black") +  xlab("LE_female") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Life.Expectancy.at.Birth..Females), color='red')
+
+
+mean(census_2022$Life.Expectancy.at.Birth..Females)
+
+grid.arrange(LE_male, LE_female , ncol=2)
+
+#Histogram for UA_both_sex
+ggplot() +
+  geom_histogram(aes(x = census_2022$Under.Age.5.Mortality..Both.Sexes),
+                 binwidth = 5, fill = "grey", color = "black") +  xlab("UA_both_sex") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Under.Age.5.Mortality..Both.Sexes), color='red')
+
+
+mean(census_2022$Under.Age.5.Mortality..Both.Sexes)
+
+#Histogram for UA_male
+UA_male <- ggplot() +
+  geom_histogram(aes(x = census_2022$Under.Age.5.Mortality..Males),
+                 binwidth = 5, fill = "grey", color = "black") +  xlab("UA_male") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Under.Age.5.Mortality..Males), color='red')
+
+
+mean(census_2022$Under.Age.5.Mortality..Males)
+
+#Histogram for UA_female
+UA_female <- ggplot() +
+  geom_histogram(aes(x = census_2022$Under.Age.5.Mortality..Females),
+                 binwidth = 5, fill = "grey", color = "black") +  xlab("UA_female") +
+  ylab("Frequency") + stat_summary(fun = mean, geom = "line") + 
+  geom_vline(xintercept = mean(census_2022$Under.Age.5.Mortality..Females), color='red')
+
+
+grid.arrange(UA_male,UA_female, ncol=2)
+
+#Difference between region and sexes
+
+grouped_data <- census_2022[,c(4,7,8)]
+
+male_female<-data.frame(gather(grouped_data, key = "Male_and_Female", value = "value",Life.Expectancy.at.Birth..Females, Life.Expectancy.at.Birth..Males))
+
+male_female %>%
+  ggplot( aes(x=Region, y = value, fill = Male_and_Female )) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values=c("Pink", "Purple"), labels=c("Females","Males")) +
+  geom_hline(aes(yintercept=mean(census_2022$Life.Expectancy.at.Birth..Males),
+               color="mean_male"), linetype="dashed",size=1)+
+  geom_hline(aes(yintercept=mean(census_2022$Life.Expectancy.at.Birth..Females),
+                 color="mean_female"), linetype="dashed", size=1) +
+  scale_color_manual(name = "statistics", values = c(mean_male = "blue", mean_female = "red")) +
+  theme(legend.position="bottom",text = element_text(size=15), legend.text=element_text(size=15)) + xlab("Region") +
+  ylab("Life Expectancy in years") + labs(fill="")
+
+grouped_data_UA <- census_2022[,c(4,10,11)]
+
+UA_male_female<-data.frame(gather(grouped_data_UA, key = "UA_Male_and_Female", value = "value",Under.Age.5.Mortality..Males, Under.Age.5.Mortality..Females))
+
+UA_male_female %>%
+  ggplot( aes(x=Region, y = value, fill = UA_Male_and_Female )) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values=c("Pink", "Purple"), labels=c("Females","Males")) +
+  geom_hline(aes(yintercept=mean(census_2022$Under.Age.5.Mortality..Males),
+               color="mean_male"), linetype="dashed",size=1)+
+  geom_hline(aes(yintercept=mean(census_2022$Under.Age.5.Mortality..Females),
+                 color="mean_female"), linetype="dashed", size=1) +
+  scale_color_manual(name = "statistics", values = c(mean_male = "blue", mean_female = "red")) +
+  theme(legend.position="bottom",text = element_text(size=15), legend.text=element_text(size=15)) + xlab("Region") +
+  ylab("Under Age Mortality") + labs(fill="")
+
+
+
+
+```
+
+
+#Task 2
+```{r}
+europe_data <- subset(census_2022, Region == "Europe" )
+
+
+#IQR of of all variables within the subregion Eastern Europe
+
+eastern_europe_data <- subset(census_2022, Subregion == "Eastern Europe")
+IQR(eastern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+IQR(eastern_europe_data$`Life.Expectancy.at.Birth..Males`)
+IQR(eastern_europe_data$`Life.Expectancy.at.Birth..Females`)
+IQR(eastern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+IQR(eastern_europe_data$`Under.Age.5.Mortality..Males`)
+IQR(eastern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#IQR of of all variables within the subregion Northern Europe
+
+northern_europe_data <- subset(census_2022, Subregion == "Northern Europe")
+IQR(northern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+IQR(northern_europe_data$Life.Expectancy.at.Birth..Males)
+IQR(northern_europe_data$`Life.Expectancy.at.Birth..Females`)
+IQR(northern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+IQR(northern_europe_data$`Under.Age.5.Mortality..Males`)
+IQR(northern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#IQR of of all variables within the subregion Southern Europe
+
+southern_europe_data <- subset(census_2022, Subregion == "Southern Europe")
+IQR(southern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+IQR(southern_europe_data$Life.Expectancy.at.Birth..Males)
+IQR(southern_europe_data$`Life.Expectancy.at.Birth..Females`)
+IQR(southern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+IQR(southern_europe_data$`Under.Age.5.Mortality..Males`)
+IQR(southern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#IQR of of all variables within the subregion Western Europe
+
+western_europe_data <- subset(census_2022, Subregion == "Western Europe")
+IQR(western_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+IQR(western_europe_data$Life.Expectancy.at.Birth..Males)
+IQR(western_europe_data$`Life.Expectancy.at.Birth..Females`)
+IQR(western_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+IQR(western_europe_data$`Under.Age.5.Mortality..Males`)
+IQR(western_europe_data$`Under.Age.5.Mortality..Females`)
+
+
+#quantile of of all variables within the subregion Eastern Europe
+
+eastern_europe_data <- subset(census_2022, Subregion == "Eastern Europe")
+quantile(eastern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+quantile(eastern_europe_data$Life.Expectancy.at.Birth..Males)
+quantile(eastern_europe_data$`Life.Expectancy.at.Birth..Females`)
+quantile(eastern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+quantile(eastern_europe_data$`Under.Age.5.Mortality..Males`)
+quantile(eastern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#quantile of of all variables within the subregion Northern Europe
+
+northern_europe_data <- subset(census_2022, Subregion == "Northern Europe")
+quantile(northern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+quantile(northern_europe_data$Life.Expectancy.at.Birth..Males)
+quantile(northern_europe_data$`Life.Expectancy.at.Birth..Females`)
+quantile(northern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+quantile(northern_europe_data$`Under.Age.5.Mortality..Males`)
+quantile(northern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#quantile of of all variables within the subregion Southern Europe
+
+southern_europe_data <- subset(census_2022, Subregion == "Southern Europe")
+quantile(southern_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+quantile(southern_europe_data$Life.Expectancy.at.Birth..Males)
+quantile(southern_europe_data$`Life.Expectancy.at.Birth..Females`)
+quantile(southern_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+quantile(southern_europe_data$`Under.Age.5.Mortality..Males`)
+quantile(southern_europe_data$`Under.Age.5.Mortality..Females`)
+
+#quantile of of all variables within the subregion Western Europe
+
+western_europe_data <- subset(census_2022, Subregion == "Western Europe")
+quantile(western_europe_data$`Life.Expectancy.at.Birth..Both.Sexes`)
+quantile(western_europe_data$Life.Expectancy.at.Birth..Males)
+quantile(western_europe_data$`Life.Expectancy.at.Birth..Females`)
+quantile(western_europe_data$`Under.Age.5.Mortality..Both.Sexes`)
+quantile(western_europe_data$`Under.Age.5.Mortality..Males`)
+quantile(western_europe_data$`Under.Age.5.Mortality..Females`)
+
+#BOX plot of all variables within the region europe and year 2022 according to 
+#subregions
+
+boxplot(europe_data$`Life.Expectancy.at.Birth..Both.Sexes`~europe_data$Subregion,xlab="Subregion",ylab="LE_both_sex")
+boxplot(europe_data$`Life.Expectancy.at.Birth..Males`~europe_data$Subregion,xlab="Subregion",ylab="LE_male")
+boxplot(europe_data$`Life.Expectancy.at.Birth..Females`~europe_data$Subregion,xlab="Subregion",ylab="LE_female")
+boxplot(europe_data$`Under.Age.5.Mortality..Both.Sexes`~europe_data$Subregion,xlab="Subregion",ylab="UA_both_sex")
+boxplot(europe_data$`Under.Age.5.Mortality..Males`~europe_data$Subregion,xlab="Subregion",ylab="UA_male")
+boxplot(europe_data$`Under.Age.5.Mortality..Females`~europe_data$Subregion,xlab="Subregion",ylab="UA_female")
+
+
+
+
+```
+
+#Task3
+```{r}
+
+# Calculate the correlation between life expectancy rate and mortality rate for males, females and both sexes respectively
+male_cor <- cor(census_2022$Life.Expectancy.at.Birth..Males, census_2022$Under.Age.5.Mortality..Males)
+female_cor <- cor(census_2022$Life.Expectancy.at.Birth..Females, census_2022$Under.Age.5.Mortality..Females)
+both_cor <- cor(census_2022$Life.Expectancy.at.Birth..Both.Sexes, census_2022$Under.Age.5.Mortality..Both.Sexes)
+
+# Print the correlations
+cat("Correlation between life expectancy rate and mortality rate for males:", male_cor, "\n")
+cat("Correlation between life expectancy rate and mortality rate for females:", female_cor, "\n")
+cat("Correlation between life expectancy rate and mortality rate for both sexes:", both_cor, "\n")
+
+#Scatterplots
+corr_LE_MR_Males <- ggplot(census_2022, aes(x = Life.Expectancy.at.Birth..Males , y = Under.Age.5.Mortality..Males)) +
+  geom_point() +
+  labs(title = "Correlation between life expectancy rate of males and mortality rate for males", y = "LE_male", x = "UA_male")
+
+corr_LE_MR_Females <- ggplot(census_2022, aes(x = Life.Expectancy.at.Birth..Females, y = Under.Age.5.Mortality..Females)) +
+  geom_point() +
+  labs(title = "Correlation between life expectancy rate of females and mortality rate for females", y = "LE_female", x = "UA_female")
+
+corr_LE_MR_bothsexes <-ggplot(census_2022, aes(x = Life.Expectancy.at.Birth..Both.Sexes, y = Under.Age.5.Mortality..Both.Sexes)) +
+  geom_point() +
+  labs(title = "Correlation between life expectancy rate of both sexes and mortality rate for both sexes", y = "LE_both_sex", x = "UA_both_sex")
+
+
+grid.arrange(corr_LE_MR_Males,corr_LE_MR_Females,corr_LE_MR_bothsexes, nrow = 3)
+
+
+```
+#task4
+```{r, echo=TRUE}
+
+# Life Expectancy Both Sexes
+LE_sexes_trend <- ggplot(census_2002, aes(x=Life.Expectancy.at.Birth..Both.Sexes, y=census_2022$Life.Expectancy.at.Birth..Both.Sexes,colour=Region,lebel = Region)) + geom_point(size=2)
+
+LE_sexes_trend + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse( Life.Expectancy.at.Birth..Both.Sexes > 85 , as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,check_overlap=T, size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5, colour= "red")  + labs(x = "LE_both_sex_2002",y="LE_both_sex_2022")+ theme_bw(base_size = 20)+xlim(35, 95)+ylim(50, 91)+  annotate(geom="text", x=41, y=53.65, label="Afghanistan",color="#7570B3", size=3) + annotate(geom="text", x=39.5, y=63.82, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=39, y=58.76, label="Sierra Leone",color="#1B9E77",size=3)+ annotate(geom="text", x=39, y=57.10, label="Mozambique",color="#1B9E77",size=3)
+census_2002$diff <-census_2002$Life.Expectancy.at.Birth..Both.Sexes-census_2022$Life.Expectancy.at.Birth..Both.Sexes
+filter(census_2002, diff>=0)
+
+# Life Expectancy Males
+LE_males_trend <- ggplot(census_2002, aes(x=Life.Expectancy.at.Birth..Males, y=census_2022$Life.Expectancy.at.Birth..Males,colour=Region,lebel = Region)) + geom_point(size=2)
+
+LE_males_trend + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse(Life.Expectancy.at.Birth..Males>82  ,as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5, colour= "red")+ labs(x = "LE_male_2002",y="LE_male_2022")+ theme_bw(base_size = 20) +xlim(32, 88)+ylim(50, 88)+ annotate(geom="text", x=37, y=61.18, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=36, y=57.16, label="Sierra Leone",color="#1B9E77",size=3)+ annotate(geom="text", x=37, y=55.7, label="Mozambique",color="#1B9E77",size=3)+ annotate(geom="text", x=37, y=52.7, label="Afghanistan",color="#7570B3",size=3)
+census_2002$diff <-census_2002$Life.Expectancy.at.Birth..Males-census_2022$Life.Expectancy.at.Birth..Males
+filter(census_2002, diff>=0)
+#Life Expectancy Females
+LE_female_trend <- ggplot(census_2002, aes(x=Life.Expectancy.at.Birth..Females, y=census_2022$Life.Expectancy.at.Birth..Females,colour=Region,lebel = Region)) + geom_point(size=2)
+
+LE_female_trend + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse(Life.Expectancy.at.Birth..Females>90  ,as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5, colour= "red")+ labs(x = "LE_female_2002",y="LE_female_2022")+ theme_bw(base_size = 19)+xlim(35, 95)+ylim(55, 95)+ annotate(geom="text", x=39.5, y=62.82, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=39, y=60.76, label="Sierra Leone",color="#1B9E77",size=3)+ annotate(geom="text", x=39, y=59.10, label="Mozambique",color="#1B9E77",size=3)+ annotate(geom="text", x=40, y=56, label="Afghanistan",color="#7570B3",size=3)
+
+census_2002$diff <-census_2002$Life.Expectancy.at.Birth..Females-census_2022$Life.Expectancy.at.Birth..Females
+filter(census_2002, diff>=0)
+#Underage Mortality Both Sexes
+UA_sex_trend <- ggplot(census_2002, aes(x=Under.Age.5.Mortality..Both.Sexes, y=census_2022$Under.Age.5.Mortality..Both.Sexes, colour=Region,lebel = Region)) + geom_point(size=2)
+
+UA_sex_trend  + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse(Under.Age.5.Mortality..Males > 215  ,as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5, colour= "red")+ labs(x = "UA_both_sex_2002",y="UA_both_sex_2022") + theme_bw(base_size = 20)+xlim(0, 250)+ylim(0, 250)+ annotate(geom="text", x=4.94, y=2.54, label="Singapore",color="#7570B3",size=3) + annotate(geom="text", x=44.99, y=44.13, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=194.62, y=94.13, label="Mozambique",color="#1B9E77",size=3)
+census_2002$diff <-census_2002$Under.Age.5.Mortality..Both.Sexes-census_2022$Under.Age.5.Mortality..Both.Sexes
+filter(census_2002, diff<=0)
+#Underage Mortality Males
+UA_male_trend <- ggplot(census_2002, aes(x=Under.Age.5.Mortality..Males, y=census_2022$Under.Age.5.Mortality..Males,colour=Region,lebel = Region)) + geom_point(size=2)
+
+UA_male_trend + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse(Under.Age.5.Mortality..Males > 215  ,as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5, colour= "red")+ labs(x = "UA_male_2002",y="UA_male_2022") + theme_bw(base_size = 20)+xlim(0, 250)+ylim(0, 250)+ annotate(geom="text", x=4.98, y=2.03, label="Singapore",color="#7570B3",size=3) + annotate(geom="text", x=118.87, y=48.9, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=197.3, y=94.86, label="Mozambique",color="#1B9E77",size=3)
+
+census_2002$diff <-census_2002$Under.Age.5.Mortality..Males-census_2022$Under.Age.5.Mortality..Males
+filter(census_2002, diff<=0)
+#Underage Mortality Females
+UA_female_trend <- ggplot(census_2002, aes(x=Under.Age.5.Mortality..Females, y=census_2022$Under.Age.5.Mortality..Females,colour=Region,lebel = Region)) + geom_point(size=2)
+
+UA_female_trend + scale_color_brewer(palette="Dark2") + geom_text(aes(label=ifelse(Under.Age.5.Mortality..Females > 205  ,as.character(Country.Area.Name),'')),hjust=0.5,vjust=-0.5,size=3)+ geom_abline(intercept = 0, slope = 1,size = 0.5,colour= "red")+ labs(x = "UA_female_2002",y="UA_female_2022") + theme_bw(base_size = 20)+xlim(0, 250)+ylim(0, 250)+ annotate(geom="text", x=4.08, y=1.85, label="Singapore",color="#7570B3",size=3) + annotate(geom="text", x=104.2, y=39.2, label="Zimbabwe",color="#1B9E77",size=3)+ annotate(geom="text", x=197.35, y=93.37, label="Mozambique",color="#1B9E77",size=3)
+
+census_2002$diff <-census_2002$Under.Age.5.Mortality..Females-census_2022$Under.Age.5.Mortality..Females
+filter(census_2002, diff<=0)
+
+
+```
+
+
+
